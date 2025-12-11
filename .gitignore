@@ -1,5 +1,5 @@
 __pycache__/
 *.py[cod]
 *.pkl
-clscanpy.egg-info/
+scAutoPipeline.egg-info/
 build/
