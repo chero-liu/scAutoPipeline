@@ -1,0 +1,2 @@
+[console_scripts]
+scAutoPipeline = scAutoPipeline.scAutoPipeline:main
