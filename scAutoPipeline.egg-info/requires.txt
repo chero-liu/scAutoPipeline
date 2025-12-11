@@ -1,6 +1,0 @@
-pyyaml
-argparse
-numpy
-pandas
-matplotlib
-ruamel.yaml
