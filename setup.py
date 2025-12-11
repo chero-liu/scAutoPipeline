@@ -13,7 +13,6 @@ setup(
     author_email="njlcl@outlook.com",
     install_requires=[
         "pyyaml",
-        "argparse",
         "numpy",
         "pandas",
         "matplotlib",
