@@ -1,0 +1,15 @@
+module: M4 # featureanalysis
+programID:    # required
+species:    # required  human/mouse
+
+analysis:  #  required
+  enrich: 0      # [0,1]
+  gsea: 0        # [0,1]
+
+param:
+  input:   # required
+  prefix:  # 
+  refgenome:  # 参考基因组，不填写则根据物种使用默认基因组，目前支持人类、小鼠
+
+  enrich:
+  gsea:

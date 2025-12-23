@@ -1,4 +1,7 @@
-__STEPS__ = ["M1"]
+__STEPS__ = [
+    "M1",
+    "M2",
+]
 __ASSAY__ = "init"
 __PREFIX__ = "Build the single cell data analysis pipeline"
 

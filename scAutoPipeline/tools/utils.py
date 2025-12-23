@@ -6,10 +6,6 @@ import sys
 from scAutoPipeline.config.config import DATABASE
 import yaml
 
-import random
-
-random_number = random.randint(10000, 99999)
-
 
 def find_assay_init(assay):
     init_module = importlib.import_module(f"scAutoPipeline.{assay}.__init__")
@@ -81,12 +77,13 @@ class ModuleFun:
     Module class
     """
 
-    def __init__(self, data, input, analysis):
+    def __init__(self, data, input, analysis, upstream=None):
         self,
         self.cwd = os.getcwd()
         self.data = data
         self.input = input
         self.analysis = analysis
+        self.upstream = upstream
 
         self.module = self.data["module"]
         self.script = DATABASE["pipelines"][self.module]["tools"][self.analysis][
@@ -95,13 +92,23 @@ class ModuleFun:
         self.environment = DATABASE["pipelines"][self.module]["tools"][self.analysis][
             "environment"
         ]
+
         self.outdir = os.path.join(self.cwd, "result", self.data["module"])
+
         self.prefix = self.data["param"]["prefix"]
         self.species = self.data["species"]
         self.programID = self.data["programID"]
-        self.refgenome = DATABASE["refgenome"][self.species][self.analysis][
-            "index_path"
-        ]
+        if "10x" in self.input:
+            self.refgenome = DATABASE["refgenome"][self.species]["cellranger"][
+                "index_path"
+            ]
+        elif "c4" in self.input:
+            self.refgenome = DATABASE["refgenome"][self.species]["dnbc4tools"][
+                "index_path"
+            ]
+        else:
+            print(self.input)
+            print("input路径必须包含测序平台")
         self.thread = DATABASE["pipelines"][self.module]["tools"][self.analysis][
             "thread"
         ]
@@ -110,16 +117,46 @@ class ModuleFun:
     def run(self):
         sys.exit("Please implement run() method.")
 
+    # def save_script(self, shell_script_content):
+    #     shell_path = f"{self.cwd}/script/{self.module}/{self.analysis}_{self.prefix}.sh"
+    #     with open(
+    #         shell_path,
+    #         "w",
+    #     ) as file:
+    #         file.write(shell_script_content)
+
+    #     string = f"""echo sbatch -J {os.path.basename(shell_path)} -c {self.thread} --mem=64G --output={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.o --error={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.e --chdir={self.cwd} {shell_path}  >> {self.cwd}/sbatch.sh"""
+    #     os.system(string)
+
     def save_script(self, shell_script_content):
-        shell_path = f"{self.cwd}/script/{self.module}/{self.prefix}_{self.analysis}_{random_number}.sh"
-        with open(
-            shell_path,
-            "w",
-        ) as file:
+        shell_path = f"{self.cwd}/script/{self.module}/{self.analysis}_{self.prefix}.sh"
+
+        # 保存脚本文件
+        with open(shell_path, "w") as file:
             file.write(shell_script_content)
 
-        string = f"""echo sbatch -J {os.path.basename(shell_path)} -c {self.thread} --mem=64G --output={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.o --error={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.e --chdir={self.cwd} {shell_path}  >> {self.cwd}/sbatch.sh"""
-        os.system(string)
+        if self.upstream:
+            sbatch_line = (
+                f"{self.analysis}_{self.prefix}_ID=$(sbatch --dependency=afterok:${self.upstream}_{self.prefix}_ID "
+                f"-J {os.path.basename(shell_path)} "
+                f"-c {self.thread} --mem=64G "
+                f"--output={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.o "
+                f"--error={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.e "
+                f"--chdir={self.cwd} "
+                f"{shell_path} | awk '{{print $4}}')\n"
+            )
+        else:
+            sbatch_line = (
+                f"{self.analysis}_{self.prefix}_ID=$(sbatch -J {os.path.basename(shell_path)} "
+                f"-c {self.thread} --mem=64G "
+                f"--output={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.o "
+                f"--error={self.cwd}/script/{self.module}/logs/{os.path.basename(shell_path)}_%j.e "
+                f"--chdir={self.cwd} "
+                f"{shell_path} | awk '{{print $4}}')\n"
+            )
+
+        with open(f"{self.cwd}/sbatch.sh", "a") as f:
+            f.write(sbatch_line)
 
     def __enter__(self):
         return self
@@ -146,3 +183,37 @@ def get_analysis(dic, condition=lambda x: x != 0):
 
 def check_none(*args):
     return any(arg is None for arg in args)
+
+
+def get_all_folders(folder_path, exclude_hidden=True):
+    """
+    Parameters:
+        folder_path (str): 目标文件夹路径
+        exclude_hidden (bool): 是否排除隐藏文件夹，默认True
+
+    Returns:
+        list: 文件夹名列表，路径无效返回空列表
+    """
+    folder_names = []
+
+    try:
+        # 解析绝对路径
+        target_dir = os.path.abspath(folder_path)
+
+        # 校验路径有效性
+        if not os.path.exists(target_dir) or not os.path.isdir(target_dir):
+            print(f"⚠️  错误：路径 '{folder_path}' 不存在或不是文件夹")
+            return folder_names
+
+        # 遍历并筛选目录
+        for item in os.listdir(target_dir):
+            item_path = os.path.join(target_dir, item)
+            if os.path.isdir(item_path):
+                if exclude_hidden and item.startswith("."):
+                    continue
+                folder_names.append(item)
+
+    except Exception as e:
+        print(f"❌ 获取文件夹列表失败：{str(e)}")
+
+    return folder_names

@@ -2,12 +2,16 @@ import os
 import sys
 import unittest
 from scAutoPipeline.tools.M1.dnbc4tools import DNBC4tools
+from scAutoPipeline.tools.M1.cellranger import CellRanger
+from scAutoPipeline.tools.M1.fastp import Fastp
+from scAutoPipeline.tools.M1.qc import QC
 from scAutoPipeline.tools.utils import (
     Step,
     s_common,
     read_yaml,
     get_analysis,
     check_none,
+    get_all_folders,
 )
 
 
@@ -26,14 +30,43 @@ class Module1(Step):
         self.module = self.data["module"]
         self.programID = self.data["programID"]
         self.species = self.data["species"]
+        self.types = self.data["param"]["types"]
 
         self.thread = 8 if args.thread == None else int(args.thread)
+
+    def cellranger(self, type):
+        with CellRanger(
+            data=self.data,
+            type=type,
+            analysis="cellranger",
+            input=self.data["param"]["input"],
+        ) as runner:
+            runner.run()
 
     def dnbc4tools(self):
         with DNBC4tools(
             data=self.data,
             analysis="dnbc4tools",
             input=self.data["param"]["input"],
+        ) as runner:
+            runner.run()
+
+    def fastp(self, type):
+        with Fastp(
+            data=self.data,
+            type=type,
+            analysis="fastp",
+            input=self.data["param"]["input"],
+        ) as runner:
+            runner.run()
+
+    def qc(self, input, type, upstream):
+        with QC(
+            data=self.data,
+            input=input,
+            type=type,
+            upstream=upstream,
+            analysis="qc",
         ) as runner:
             runner.run()
 
@@ -45,7 +78,85 @@ class Module1(Step):
         ):
             sys.exit("Error: ProgramID , species and type are required.")
 
-        self.dnbc4tools()
+        if self.types:
+            if isinstance(self.types, list):
+                for type in self.types:
+                    if "cellranger" in self.analysis_list:
+                        self.cellranger(type=type)
+
+                    if "dnbc4tools" in self.analysis_list:
+                        self.dnbc4tools(type=type)
+
+                    if "fastp" in self.analysis_list:
+                        self.fastp(type=type)
+
+                    if "qc" in self.analysis_list:
+                        if "cellranger" in self.analysis_list:
+                            input = f"{self.cwd}/result/M1/{type}/cellranger/info.csv"
+                            upstream = "cellranger"
+                        elif "dnbc4tools" in self.analysis_list:
+                            input = f"{self.cwd}/result/M1/{type}/dnbc4tools/info.csv"
+                            upstream = "dnbc4tools"
+                        else:
+                            input = self.data["param"]["input"]
+                            upstream = None
+                        self.qc(
+                            type=type,
+                            input=input,
+                            upstream=upstream,
+                        )
+            else:
+                if "cellranger" in self.analysis_list:
+                    self.cellranger(type=self.types)
+
+                if "dnbc4tools" in self.analysis_list:
+                    self.dnbc4tools(self.types)
+
+                if "fastp" in self.analysis_list:
+                    self.fastp(type=self.types)
+
+                if "qc" in self.analysis_list:
+                    if "cellranger" in self.analysis_list:
+                        input = f"{self.cwd}/result/M1/{self.types}/cellranger/info.csv"
+                        upstream = "cellranger"
+                    elif "dnbc4tools" in self.analysis_list:
+                        input = f"{self.cwd}/result/M1/{self.types}/dnbc4tools/info.csv"
+                        upstream = "dnbc4tools"
+                    else:
+                        input = self.data["param"]["input"]
+                        upstream = None
+                    self.qc(
+                        input=input,
+                        type=self.types,
+                        upstream=upstream,
+                    )
+        else:
+            all_folders = get_all_folders(self.data["param"]["input"])
+            for type in all_folders:
+                if "cellranger" in self.analysis_list:
+                    self.cellranger(type)
+
+                if "dnbc4tools" in self.analysis_list:
+                    self.dnbc4tools(type)
+
+                if "fastp" in self.analysis_list:
+                    self.fastp(type=type)
+
+                if "qc" in self.analysis_list:
+                    if "cellranger" in self.analysis_list:
+                        input = f"{self.cwd}/result/M1/{type}/cellranger/info.csv"
+                        upstream = "cellranger"
+                    elif "dnbc4tools" in self.analysis_list:
+                        input = f"{self.cwd}/result/M1/{type}/dnbc4tools/info.csv"
+                        upstream = "dnbc4tools"
+                    else:
+                        input = self.data["param"]["input"]
+                        upstream = None
+                    self.qc(
+                        type=type,
+                        input=input,
+                        upstream=upstream,
+                    )
 
 
 def M1(args):

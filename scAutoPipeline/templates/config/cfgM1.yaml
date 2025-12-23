@@ -1,17 +1,22 @@
-module: M1 # quantification
-programID:    # required
-species:    # required  human/mouse
+module: M1           # quantification
+programID:           # required
+species:             # required  human/mouse
 
-analysis:  #  required
-  dnbc4tools: 0 # [0,1]
-  cellranger: 0 # [0,1]
+analysis:            #  required
+  fastp: 0           # [0,1]
+  dnbc4tools: 0      # [0,1]
+  cellranger: 0      # [0,1]
+  qc: 0              # [0,1]
 
 param:
-  input:   # required
-  prefix:  # 
-  refgenome:  # 参考基因组，不填写则根据物种使用默认基因组，目前支持人类、小鼠
-  forcecell:  # 强制指定最终保留的细胞数量	整数，无默认值（不指定则按算法自动筛选）示例：4000
+  input:             # required
+  types:              # 分析对象，在本模块中，不填写会将input下的所有样本（目录名字）分别进行分析
+  prefix:            # 
+  refgenome:         # 参考基因组，不填写则根据物种使用默认基因组，目前支持人类、小鼠
+  forcecell:         # 强制指定最终保留的细胞数量	整数，无默认值（不指定则按算法自动筛选）示例：4000
 
+  fastp:
   dnbc4tools:
   cellranger:
+  qc:
 
