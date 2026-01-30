@@ -34,7 +34,8 @@ class CellRanger(ModuleFun):
         shell_script_content = f"""#!/bin/bash
 
 set -euo pipefail
-
+mkdir -p {self.outdir}
+{self.environment} \\
 {self.script} count \\
     --id={self.type} \\
     --transcriptome={self.refgenome} \\
@@ -42,14 +43,14 @@ set -euo pipefail
     --sample={self.type} \\
     --localcores={self.thread} \\
     --localmem=100 \\
-    --create-bam=false \\
-    --output-dir {self.outdir} {self.forcecell} \\
+    --create-bam=true \\
+    --output-dir {self.outdir} {self.forcecell}
 
 # Generate info.csv
 FEATURE_MATRIX_PATH={self.outdir}/outs/filtered_feature_bc_matrix
 OUTPUT_FILE="{self.outdir}/info.csv"
 
-echo "sampleid,path,group,sampleid_order,datatype" > "$OUTPUT_FILE"
+echo "sample,path,group,sample_order,datatype" > "$OUTPUT_FILE"
 echo "{self.type},$FEATURE_MATRIX_PATH,{self.type},1,mtx-10x" >> "$OUTPUT_FILE"
 
 """

@@ -11,27 +11,27 @@ DATABASE = {
             "config_yaml": f"{TEMPLATE_CONFIG_PATH}/cfgM1.yaml",
             "tools": {
                 "dnbc4tools": {
-                    "environment": "",
-                    "script": "/opt/dnbc4tools2.1.3/dnbc4tools",
-                    "thread": 20,
+                    "environment": "docker run --rm -v  /nas/:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/dnbc4tools:v2.1.3",
+                    "script": "dnbc4tools",
+                    "thread": 8,
                     "description": "DNBC4tools分析环境及线程配置",
                 },
                 "cellranger": {
-                    "environment": "",
-                    "script": "/opt/cellranger-10.0.0/bin/cellranger",
-                    "thread": 20,
+                    "environment": "docker run --rm -v  /nas/:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/cellranger:v9.0.1",
+                    "script": "cellranger",
+                    "thread": 8,
                     "description": "Cellranger分析环境配置",
                 },
                 "fastp": {
                     "environment": "",
                     "script": "/opt/conda_envs/lclEnv/bin/fastp",
-                    "thread": 10,
+                    "thread": 4,
                     "description": "Fastp质量控制环境及线程配置",
                 },
                 "qc": {
-                    "environment": "source /opt/miniconda3/etc/profile.d/conda.sh && conda activate clscanpy",
+                    "environment": "docker run --rm  -v /nas:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/music:v1.0.0",
                     "script": "clscanpy",
-                    "thread": 5,
+                    "thread": 4,
                     "description": "质量控制分析环境及线程配置",
                 },
             },
@@ -40,9 +40,9 @@ DATABASE = {
             "config_yaml": f"{TEMPLATE_CONFIG_PATH}/cfgM2.yaml",
             "tools": {
                 "clustering": {
-                    "environment": "source /opt/miniconda3/etc/profile.d/conda.sh && conda activate clscanpy",
+                    "environment": "docker run --rm  -v /nas:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/music:v1.0.0",
                     "script": "clscanpy",
-                    "thread": 5,
+                    "thread": 4,
                     "description": "clustering分析环境及线程配置",
                 },
             },
@@ -71,6 +71,18 @@ DATABASE = {
                 "index_path": "/nas/database/scrna/10x-refdata/GRCm39-2024-A",
                 "genome_version": "GRCm39",
                 "description": "小鼠GRCm39参考基因组Cellranger索引路径",
+            },
+        },
+        "Ctenopharyngodon_idella_GCA_019924925_1": {
+            "dnbc4tools": {
+                "index_path": "/nas/database/scrna/c4-refdata/Ctenopharyngodon_idella_GCA_019924925_1",
+                "genome_version": "GCA_019924925.1",
+                "description": "草鱼(Ctenopharyngodon_idella) GCA_019924925.1版本",
+            },
+            "cellranger": {
+                "index_path": "",
+                "genome_version": "",
+                "description": "",
             },
         },
     },

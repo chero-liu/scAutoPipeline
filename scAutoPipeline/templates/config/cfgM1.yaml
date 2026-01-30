@@ -1,6 +1,6 @@
 module: M1           # quantification
 programID:           # required
-species:             # required  human/mouse
+species:             # required  human/mouse/Ctenopharyngodon_idella_GCA_019924925_1
 
 analysis:            #  required
   fastp: 0           # [0,1]
