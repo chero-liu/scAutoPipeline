@@ -2,6 +2,8 @@ import os
 import sys
 import unittest
 from scAutoPipeline.tools.M2.clustering import Clustering
+from scAutoPipeline.tools.M2.merge import Merge
+from scAutoPipeline.tools.M2.manualanno import Manualanno
 from scAutoPipeline.tools.utils import (
     Step,
     s_common,
@@ -40,6 +42,26 @@ class Module2(Step):
         ) as runner:
             runner.run()
 
+    def merge(self, type):
+        with Merge(
+            data=self.data,
+            type=type,
+            analysis="merge",
+            input=os.path.join(self.data["param"]["input"]),
+            model=self.data["param"]["merge"]["model"],
+        ) as runner:
+            runner.run()
+
+    def manualanno(self, type):
+        with Manualanno(
+            data=self.data,
+            type=type,
+            analysis="manualanno",
+            input=os.path.join(self.data["param"]["input"]),
+            annofile=self.data["param"]["manualanno"]["annofile"],
+        ) as runner:
+            runner.run()
+
     def run(self):
         # check required parameters
         if check_none(
@@ -56,6 +78,10 @@ class Module2(Step):
             else:
                 if "clustering" in self.analysis_list:
                     self.clustering(type=self.types)
+                if "merge" in self.analysis_list:
+                    self.merge(type=self.types)
+                if "manualanno" in self.analysis_list:
+                    self.manualanno(type=self.types)
         else:
             all_folders = get_all_folders(self.data["param"]["input"])
             for type in all_folders:

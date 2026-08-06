@@ -40,10 +40,22 @@ DATABASE = {
             "config_yaml": f"{TEMPLATE_CONFIG_PATH}/cfgM2.yaml",
             "tools": {
                 "clustering": {
-                    "environment": "docker run --rm  -v /nas:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/music:v1.0.0",
+                    "environment": "docker run --rm  -v /nas:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/clscanpy:v1.0.0",
                     "script": "clscanpy",
-                    "thread": 4,
+                    "thread": 8,
                     "description": "clustering分析环境及线程配置",
+                },
+                "merge": {
+                    "environment": "docker run --rm  -v /nas:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/clscanpy:v1.0.0",
+                    "script": "clscanpy",
+                    "thread": 8,
+                    "description": "merge分析环境及线程配置",
+                },
+                "manualanno": {
+                    "environment": "docker run --rm  -v /nas:/nas crpi-nc6vrpgro1z8mu8m.cn-chengdu.personal.cr.aliyuncs.com/lclimage/clscanpy:v1.0.0",
+                    "script": "clscanpy",
+                    "thread": 8,
+                    "description": "manualanno分析环境及线程配置",
                 },
             },
         },

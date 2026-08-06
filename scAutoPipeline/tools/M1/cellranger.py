@@ -53,6 +53,7 @@ OUTPUT_FILE="{self.outdir}/info.csv"
 echo "sample,path,group,sample_order,datatype" > "$OUTPUT_FILE"
 echo "{self.type},$FEATURE_MATRIX_PATH,{self.type},1,mtx-10x" >> "$OUTPUT_FILE"
 
+cp /home/chenglong.liu/RaD/scAutoPipeline/scAutoPipeline/docs/cellranger/README.md {self.outdir}/output
 """
         self.save_script(shell_script_content)
 

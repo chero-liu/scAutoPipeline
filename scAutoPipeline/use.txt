@@ -1,0 +1,395 @@
+# scAutoPipeline 使用说明
+
+## 项目概述
+
+scAutoPipeline 是一个用于单细胞RNA测序数据分析的自动化流水线工具。它提供了模块化的分析流程，支持多种单细胞测序平台（10x Genomics、DNBelab C4等）和多种分析工具（Cell Ranger、DNBC4tools、fastp等）。该工具旨在简化和标准化单细胞数据分析流程，提高分析效率和可重复性。
+
+## 核心功能
+
+1. **M1模块（定量分析）**：FASTQ文件质量控制、DNBC4tools分析、Cell Ranger分析、数据质量控制
+2. **M2模块（聚类分析）**：细胞聚类分析、多个样本合并分析、细胞类型手动注释
+3. **多平台支持**：10x Genomics、DNBelab C4等单细胞测序平台
+4. **多物种支持**：人类、小鼠、草鱼等多种物种的参考基因组
+5. **容器化部署**：使用Docker容器确保分析环境的一致性
+6. **自动化脚本生成**：自动生成SLURM作业提交脚本，便于在HPC集群上运行
+
+## 安装方法
+
+### 通过pip安装
+```bash
+# 从源代码安装
+cd /home/chenglong.liu/RaD/scAutoPipeline
+pip install -e .
+```
+
+### 依赖要求
+- Python 3.7+
+- 主要Python包依赖：pyyaml, numpy, pandas, matplotlib, ruamel.yaml
+
+安装后，系统将添加 `scAutoPipeline` 命令行工具。
+
+## 命令行接口
+
+### 基本命令结构
+```
+scAutoPipeline <assay> <step> [options]
+```
+
+其中：
+- `<assay>`：分析类型，支持 `init`（初始化）和 `run`（运行）
+- `<step>`：分析步骤，支持 `M1`、`M2` 等
+
+### 获取帮助
+```bash
+# 查看全局帮助
+scAutoPipeline -h
+
+# 查看特定分析类型帮助
+scAutoPipeline init -h
+scAutoPipeline run -h
+
+# 查看特定模块帮助
+scAutoPipeline init M1 -h
+scAutoPipeline run M1 -h
+```
+
+## 模块使用说明
+
+### 1. M1模块 - 定量分析初始化
+
+**功能**：初始化M1模块（定量分析），创建目录结构和配置文件
+
+**命令格式**：
+```bash
+scAutoPipeline init M1 -i <input_path> -o <output_dir> -s <species> [options]
+```
+
+**参数说明**：
+- `-i, --input`：输入数据路径（包含FASTQ文件的目录），必填
+- `-o, --outdir`：输出目录，默认：当前目录
+- `-s, --species`：物种，必填，可选值：human, mouse, Ctenopharyngodon_idella_GCA_019924925_1
+- `-p, --prefix`：输出文件前缀，可选
+- `--thread`：线程数，可选
+
+**示例**：
+```bash
+# 初始化人类样本的M1分析
+scAutoPipeline init M1 -i /nas/projects/scrna/c4/sample1 -o ./analysis_output -s human -p sample1
+
+# 初始化小鼠样本的M1分析
+scAutoPipeline init M1 -i /nas/projects/scrna/10x/sample2 -o ./analysis_output -s mouse
+```
+
+### 2. M2模块 - 聚类分析初始化
+
+**功能**：初始化M2模块（聚类分析），创建目录结构和配置文件
+
+**命令格式**：
+```bash
+scAutoPipeline init M2 -o <output_dir> -s <species> [options]
+```
+
+**参数说明**：
+- `-o, --outdir`：输出目录，默认：当前目录
+- `-s, --species`：物种，必填
+- `-p, --prefix`：输出文件前缀，可选
+- `--thread`：线程数，可选
+
+**示例**：
+```bash
+# 初始化人类样本的M2分析
+scAutoPipeline init M2 -o ./analysis_output -s human -p sample1
+```
+
+### 3. 运行M1模块
+
+**功能**：运行M1模块的定量分析
+
+**命令格式**：
+```bash
+scAutoPipeline run M1 -c <config_file> [options]
+```
+
+**参数说明**：
+- `-c, --config`：配置文件路径（YAML格式），必填
+
+**示例**：
+```bash
+# 运行M1分析
+scAutoPipeline run M1 -c ./analysis_output/config/cfgM1.yaml
+```
+
+### 4. 运行M2模块
+
+**功能**：运行M2模块的聚类分析
+
+**命令格式**：
+```bash
+scAutoPipeline run M2 -c <config_file> [options]
+```
+
+**参数说明**：
+- `-c, --config`：配置文件路径（YAML格式），必填
+
+**示例**：
+```bash
+# 运行M2分析
+scAutoPipeline run M2 -c ./analysis_output/config/cfgM2.yaml
+```
+
+## 配置文件说明
+
+### M1配置文件 (cfgM1.yaml)
+
+**位置**：`<output_dir>/config/cfgM1.yaml`
+
+**必填字段**：
+- `programID`：项目ID
+- `species`：物种（human/mouse/Ctenopharyngodon_idella_GCA_019924925_1）
+- `param.input`：输入数据路径
+
+**分析步骤配置**（0表示不运行，1表示运行）：
+- `analysis.fastp`：FASTQ文件质量控制
+- `analysis.dnbc4tools`：DNBC4tools分析
+- `analysis.cellranger`：Cell Ranger分析
+- `analysis.qc`：数据质量控制
+
+**示例配置**：
+```yaml
+module: M1
+programID: sample1
+species: human
+
+analysis:
+  fastp: 1
+  dnbc4tools: 1
+  cellranger: 0
+  qc: 1
+
+param:
+  input: /nas/projects/scrna/c4/sample1
+  types:  # 可选，不填写则分析input下所有样本
+  prefix: sample1
+  refgenome:  # 可选，不填写则根据物种使用默认基因组
+  forcecell: 4000  # 可选，强制指定最终保留的细胞数量
+```
+
+### M2配置文件 (cfgM2.yaml)
+
+**位置**：`<output_dir>/config/cfgM2.yaml`
+
+**必填字段**：
+- `programID`：项目ID
+- `species`：物种
+- `param.input`：输入数据路径
+
+**分析步骤配置**（0表示不运行，1表示运行）：
+- `analysis.clustering`：细胞聚类分析
+- `analysis.merge`：多个样本合并分析
+- `analysis.manualanno`：细胞类型手动注释
+
+**示例配置**：
+```yaml
+module: M2
+programID: sample1
+species: human
+
+analysis:
+  clustering: 1
+  merge: 0
+  manualanno: 1
+
+param:
+  input: ./analysis_output/result/M1
+  prefix: sample1
+```
+
+## 支持的物种和参考基因组
+
+### 人类 (human)
+- **DNBC4tools**：GRCh38-2024-A (`/nas/database/scrna/c4-refdata/GRCh38-2024-A`)
+- **Cell Ranger**：GRCh38 (`/nas/database/scrna/10x-refdata/GRCh38-2024-A`)
+
+### 小鼠 (mouse)
+- **DNBC4tools**：GRCm39-2024-A (`/nas/database/scrna/c4-refdata/GRCm39-2024-A`)
+- **Cell Ranger**：GRCm39 (`/nas/database/scrna/10x-refdata/GRCm39-2024-A`)
+
+### 草鱼 (Ctenopharyngodon_idella_GCA_019924925_1)
+- **DNBC4tools**：GCA_019924925.1 (`/nas/database/scrna/c4-refdata/Ctenopharyngodon_idella_GCA_019924925_1`)
+
+## 输出目录结构
+
+### M1模块初始化后生成的目录结构：
+```
+<output_dir>/
+├── config/           # 配置文件目录
+│   └── cfgM1.yaml   # M1配置文件
+├── result/M1/        # M1结果文件目录
+├── script/M1/        # M1分析脚本目录
+│   └── logs/        # 日志文件目录
+├── result/M2/        # M2结果文件目录（预留）
+├── script/M2/        # M2分析脚本目录（预留）
+│   └── logs/
+└── sbatch.sh        # SLURM作业提交脚本
+```
+
+### 运行后生成的文件：
+1. **分析脚本**：每个分析步骤的Shell脚本（位于 `script/<module>/`）
+2. **结果文件**：分析结果（位于 `result/<module>/`）
+3. **日志文件**：运行日志（位于 `script/<module>/logs/`）
+4. **SLURM提交脚本**：自动管理作业依赖关系的提交脚本（`sbatch.sh`）
+
+## 工具配置
+
+### M1模块工具
+- **dnbc4tools**：DNBelab C4数据分析工具（Docker容器）
+- **cellranger**：10x Genomics Cell Ranger（Docker容器）
+- **fastp**：FASTQ文件质量控制工具（本地安装）
+- **qc**：单细胞数据质量控制工具（Docker容器）
+
+### M2模块工具
+- **clustering**：细胞聚类分析工具（Docker容器）
+- **merge**：样本合并分析工具（Docker容器）
+- **manualanno**：细胞类型注释工具（Docker容器）
+
+## 实用工具函数
+
+### FASTQ文件自动分类
+```python
+from scAutoPipeline.tools.utils import classify_fastq_files
+
+# 自动分类FASTQ文件
+result = classify_fastq_files("/path/to/fastq/directory")
+# 返回分类字典：cDNAfastq1, cDNAfastq2, oligofastq1, oligofastq2
+```
+
+### 获取目录下所有文件夹
+```python
+from scAutoPipeline.tools.utils import get_all_folders
+
+# 获取目录下所有文件夹
+folders = get_all_folders("/path/to/directory")
+```
+
+## 典型工作流程
+
+### 完整分析流程示例
+
+```bash
+# 1. 安装scAutoPipeline
+cd /home/chenglong.liu/RaD/scAutoPipeline
+pip install -e .
+
+# 2. 初始化M1模块（定量分析）
+scAutoPipeline init M1 -i /nas/projects/scrna/c4/sample1 -o ./analysis_output -s human -p sample1
+
+# 3. 编辑配置文件
+# 编辑 ./analysis_output/config/cfgM1.yaml，设置分析步骤和参数
+
+# 4. 运行M1模块
+scAutoPipeline run M1 -c ./analysis_output/config/cfgM1.yaml
+
+# 5. 初始化M2模块（聚类分析）
+scAutoPipeline init M2 -o ./analysis_output -s human -p sample1
+
+# 6. 编辑M2配置文件
+# 编辑 ./analysis_output/config/cfgM2.yaml，设置分析步骤和参数
+
+# 7. 运行M2模块
+scAutoPipeline run M2 -c ./analysis_output/config/cfgM2.yaml
+
+# 8. 提交SLURM作业（如果需要）
+bash ./analysis_output/sbatch.sh
+```
+
+### 快速单步分析示例
+
+```bash
+# 只运行fastp质量控制
+# 在cfgM1.yaml中设置：analysis.fastp: 1, 其他分析步骤: 0
+scAutoPipeline run M1 -c ./analysis_output/config/cfgM1.yaml
+
+# 只运行聚类分析
+# 在cfgM2.yaml中设置：analysis.clustering: 1, 其他分析步骤: 0
+scAutoPipeline run M2 -c ./analysis_output/config/cfgM2.yaml
+```
+
+## 故障排除
+
+### 常见问题及解决方案
+
+1. **模块找不到错误**
+   - 确保已正确安装scAutoPipeline：`pip install -e .`
+   - 检查Python路径：`which scAutoPipeline`
+
+2. **配置文件错误**
+   - 检查YAML文件格式是否正确
+   - 确保所有必填字段都已填写
+   - 使用YAML验证工具检查语法
+
+3. **Docker容器错误**
+   - 确保Docker服务正在运行：`systemctl status docker`
+   - 检查容器镜像是否可用：`docker images`
+
+4. **参考基因组路径错误**
+   - 检查 `config/config.py` 中的参考基因组路径
+   - 确保有相应的访问权限
+
+5. **输入路径错误**
+   - 确保输入路径存在且包含正确的FASTQ文件
+   - 检查路径权限：`ls -la /path/to/input`
+
+### 获取帮助
+- 查看命令行帮助：`scAutoPipeline -h`
+- 查看特定模块帮助：`scAutoPipeline init M1 -h`
+- 检查日志文件：`<output_dir>/script/*/logs/`
+- 查看项目文档：`/home/chenglong.liu/RaD/scAutoPipeline/README.md`
+
+## 环境要求
+
+### 系统要求
+- Linux系统（推荐CentOS 7+或Ubuntu 18.04+）
+- Docker引擎（用于容器化分析）
+- SLURM作业调度系统（可选，用于HPC集群）
+
+### 存储要求
+- 输入数据：FASTQ文件（通常每个样本10-100GB）
+- 参考基因组：已预配置在 `/nas/database/scrna/`
+- 输出数据：分析结果（通常每个样本5-50GB）
+
+### 权限要求
+- 对输入数据目录的读取权限
+- 对输出目录的写入权限
+- Docker执行权限（通常需要加入docker用户组）
+
+## 注意事项
+
+1. **输入数据格式**：FASTQ文件应符合标准命名规范，包含 `_R1_`、`_R2_` 等标识
+2. **物种选择**：确保选择的物种与参考基因组匹配
+3. **分析步骤选择**：根据实验设计选择需要的分析步骤
+4. **资源分配**：根据数据量调整线程数和内存配置
+5. **输出目录**：建议使用独立的输出目录，避免文件覆盖
+
+## 版本信息
+
+- **当前版本**：v1.0
+- **项目路径**：`/home/chenglong.liu/RaD/scAutoPipeline/scAutoPipeline`
+- **作者**：刘承龙 (liuchenglong) - njlcl@outlook.com
+- **最后更新**：2026年3月4日
+
+## 扩展开发
+
+### 添加新的分析模块
+1. 在 `scAutoPipeline/init/` 或 `scAutoPipeline/run/` 目录中添加新的模块文件
+2. 在相应的 `__init__.py` 文件中注册模块
+3. 在 `config/config.py` 中配置工具参数
+4. 在 `templates/config/` 中添加配置文件模板
+
+### 自定义工具配置
+修改 `config/config.py` 中的 `DATABASE` 字典，添加或修改工具配置。
+
+---
+
+**注意**：本文档基于 scAutoPipeline v1.0 编写，具体功能可能随版本更新而变化。请参考实际代码和最新文档。
+
+**使用建议**：对于首次使用，建议先在小规模测试数据上运行，验证配置和流程正确性，然后再应用于正式数据分析。

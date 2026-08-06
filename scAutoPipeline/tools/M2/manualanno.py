@@ -5,17 +5,19 @@ from scAutoPipeline.config.config import DATABASE
 from typing import Union
 
 
-class Clustering(ModuleFun):
+class Manualanno(ModuleFun):
     def __init__(
         self,
         data: dict,
         analysis: str,
         input: str,
         type: str,
+        annofile: str = None,
         upstream: str = None,
     ):
         super().__init__(data, input, analysis, upstream)
         self.type = type
+        self.annofile = annofile
 
     def init_param(self):
         self.outdir = os.path.join(
@@ -28,11 +30,17 @@ class Clustering(ModuleFun):
         shell_script_content = f"""#!/bin/bash
 set -euo pipefail
 {self.environment} \\
-{self.script} integration clustering \\
+{self.script} integration manualanno \\
     --input {self.input} \\
     --outdir {self.outdir} \\
-    --refgenome {self.refgenome}
+    --groupby celltype \\
+    --refgenome  {self.refgenome} \\
+    --annofile {self.annofile}
+
+
 {self.environment} chmod 777 -R {self.outdir}
+
+
 """
         self.save_script(shell_script_content)
 

@@ -20,7 +20,6 @@ Cell Ranger 是 10x Genomics 单细胞 RNA 测序数据分析的标准流程。�
 - **内容示例**:
   ```
   Estimated Number of Cells,Mean Reads per Cell,Median Genes per Cell,Number of Reads,Valid Barcodes
-  "10,536","31,640","3
   ```
 - **重要指标**:
   - `Estimated Number of Cells`: 估计的细胞数
@@ -218,4 +217,4 @@ Cell Ranger 是 10x Genomics 单细胞 RNA 测序数据分析的标准流程。�
 3. **存储空间**: 原始数据文件较大，注意磁盘空间管理
 4. **分析完整性**: 所有分析步骤的结果都保存在 `analysis/` 目录中，可按需使用
 
-*分析软件: Cell Ranger 10.0.0
+*分析软件: Cell Ranger 9.0.1

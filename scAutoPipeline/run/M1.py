@@ -43,7 +43,7 @@ class Module1(Step):
         ) as runner:
             runner.run()
 
-    def dnbc4tools(self,type):
+    def dnbc4tools(self, type):
         with DNBC4tools(
             data=self.data,
             analysis="dnbc4tools",
@@ -134,7 +134,7 @@ class Module1(Step):
         else:
             all_folders = get_all_folders(self.data["param"]["input"])
             if len(all_folders) == 0:
-                exit('input 不存在 文件夹（样本）')
+                exit("input 不存在 文件夹（样本）")
             for type in all_folders:
                 if "cellranger" in self.analysis_list:
                     self.cellranger(type)

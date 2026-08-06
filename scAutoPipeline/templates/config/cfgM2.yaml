@@ -4,11 +4,19 @@ species:             # required  human/mouse
 
 analysis:            #  required
   clustering: 0      # [0,1]
+  merge: 0           # [0,1]
+  manualanno: 0      # [0,1]
 
 param:
   input:              # required
-  types:              # 分析对象，在本模块中，不填写会将input下的所有样本（目录名字）分别进行分析
+  types:              # 
   prefix:             # 
   refgenome:          # 参考基因组，不填写则根据物种使用默认基因组，目前支持人类、小鼠
 
   clustering:
+
+  merge:
+    model:            # celltypist
+  
+  manualanno:
+    annofile:         # 第一列为cluster，第二列为celltype
